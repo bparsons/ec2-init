@@ -171,8 +171,8 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
     try:
         with open('/root/.ssh/authorized_keys', 'w') as authkeyfile:
             for key in PUBLICKEYS.items():
-                if  not record[1][0]  in currentkeys:
-                    authkeyfile.write(record[1][0])
+                if  not key[1][0]  in currentkeys:
+                    authkeyfile.write(key[1][0])
                     authkeyfile.write('\n')
             authkeyfile.close()
     except IOError as e:
