@@ -166,7 +166,7 @@ subprocess.call(subcmd,shell=True)
 # make sure /root/.ssh exists
 if not os.path.exists('/root/.ssh'):
     os.makedirs('/root/.ssh')
-    os.chmod('/root/.ssh',700)
+    os.chmod('/root/.ssh',0700)
 
 # save public key to authorized_keys file
 if type(PUBLICKEYS.items()) in [list, tuple, set]:
@@ -181,7 +181,7 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
                     authkeyfile.write(key[1][0])
                     authkeyfile.write('\n')
             authkeyfile.close()
-            os.chmod('/root/.ssh/authorized_keys',600)
+            os.chmod('/root/.ssh/authorized_keys',0600)
     except IOError as e:
             print 'Could not open authorized_keys file for writing!' + e
 
