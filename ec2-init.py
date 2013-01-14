@@ -162,6 +162,10 @@ except IOError as e:
 subcmd = "hostname " + hostname
 subprocess.call(subcmd,shell=True)
 
+# make sure /root/.ssh exists
+if not os.path.exists('/root/.ssh'):
+    os.makedirs('/root/.ssh')
+
 # save public key to authorized_keys file
 if type(PUBLICKEYS.items()) in [list, tuple, set]:
     try:
