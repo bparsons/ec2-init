@@ -137,7 +137,6 @@ config.read("/etc/conf.d/ec2-init")
 try:
     confmailto = config.get("ec2-init", "mailto")
     confmailfrom = config.get("ec2-init", "mailfrom")
-    sendemail = config.get("ec2-init",  "sendemail")
 except ConfigParser.NoSectionError: 
     print("Config file /etc/conf.d/ec2-init not found")
     
@@ -194,34 +193,32 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
 # update dns
 updatedns(hostname, PUBLICIP)
 
-if sendemail == True:
+# Get mail to address from user metadata or conf file or default to root
+try:
+    mailto = user_data['mailto']
+except KeyError:
+    mailto = confmailto
+except NameError:
+    mailto = "root"
+    
+# Get mail from address from user metadata or conf file or default to root
+try:
+    mailfrom = user_data['mailfrom']
+except KeyError:
+    mailfrom = confmailfrom
+except NameError:
+    mailfrom = "root"
+    
+# compose boot email
+messageheader = "From: EC2-Init <" + mailfrom + ">\n"
+messageheader += "To: " + mailto + "\n"
+messageheader += "Subject: " + hostname + "\n\n"
+message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%S %Z %Y") + ". A " + INSTANCETYPE + " in " + AVAILABILITYZONE + " with IP: " + PUBLICIP + ".\n\n"
 
-    # Get mail to address from user metadata or conf file or default to root
-    try:
-        mailto = user_data['mailto']
-    except KeyError:
-        mailto = confmailto
-    except NameError:
-        mailto = "root"
-    
-    # Get mail from address from user metadata or conf file or default to root
-    try:
-        mailfrom = user_data['mailfrom']
-    except KeyError:
-        mailfrom = confmailfrom
-    except NameError:
-        mailfrom = "root"
-        
-    # compose boot email
-    messageheader = "From: EC2-Init <" + mailfrom + ">\n"
-    messageheader += "To: " + mailto + "\n"
-    messageheader += "Subject: " + hostname + "\n\n"
-    message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%S %Z %Y") + ". A " + INSTANCETYPE + " in " + AVAILABILITYZONE + " with IP: " + PUBLICIP + ".\n\n"
-    
-    # send boot email
-    try:
-        smtpObj = smtplib.SMTP('localhost')
-        smtpObj.sendmail(mailfrom, mailto, message)
-    except smtplib.SMTPException:
-        print("Error: unable to send boot alert email")
+# send boot email
+try:
+    smtpObj = smtplib.SMTP('localhost')
+    smtpObj.sendmail(mailfrom, mailto, message)
+except smtplib.SMTPException:
+    print("Error: unable to send boot alert email")
     
