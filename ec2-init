@@ -1,0 +1,3 @@
+[ec2-init]
+mailto = root
+mailfrom = root

@@ -9,27 +9,33 @@ Brian Parsons <brian@pmex.com>
 
 
 Features:
----------
+-------------
 Sets hostname based on instance user-data hostname
 Sends email with hostname, instance type, and IP address
 Will update DNS in Route53 if boto finds credentials or has IAM role and zone file is found
 
 
 Requires:
----------
+------------
 boto - https://github.com/boto/boto
 
 
 Changelog:
-----------
+---------------
 2012-06-20 - bcp - added bootalert
 2012-06-20 - bcp - grabs domain name from user-data and sets DNS for instance  ID
 2012-09-15 - bcp - added additional grep for hostname and domainname in case both are returned
 2012-12-14 - bcp - updated for systemd, bash functions moved to single python script
+<<<<<<< HEAD
 
+=======
+2013-01-14 - bcp - grabs public keys from metadata and creates or updates authorized_keys for root
+2013-01-14 - bcp - pulls mailto, mailfrom from user metadata or config file /etc/conf.d/ec2-init
+>>>>>>> development
 
 """
 
+import ConfigParser
 import datetime
 import os
 import re
@@ -129,12 +135,15 @@ def updatedns(hostname, newip):
     change.add_value(newip)
     change2.commit()
 
-# TODO
-# Move variables to /etc/systemd/ec2-init.conf
-#
-mailto = "brian@pmex.com"
-mailfrom = "bootalert@brianparsons.net"
-
+# Parse Config File
+config = ConfigParser.ConfigParser()
+config.read("/etc/conf.d/ec2-init")
+try:
+    confmailto = config.get("ec2-init", "mailto")
+    confmailfrom = config.get("ec2-init", "mailfrom")
+except ConfigParser.NoSectionError: 
+    print("Config file /etc/conf.d/ec2-init not found")
+    
 # Collect Meta Data
 inst_data = get_instance_metadata()
 INSTANCETYPE=inst_data["instance-type"]
@@ -188,6 +197,25 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
 # update dns
 updatedns(hostname, PUBLICIP)
 
+<<<<<<< HEAD
+=======
+# Get mail to address from user metadata or conf file or default to root
+try:
+    mailto = user_data['mailto']
+except KeyError:
+    mailto = confmailto
+except NameError:
+    mailto = "root"
+    
+# Get mail from address from user metadata or conf file or default to root
+try:
+    mailfrom = user_data['mailfrom']
+except KeyError:
+    mailfrom = confmailfrom
+except NameError:
+    mailfrom = "root"
+    
+>>>>>>> development
 # compose boot email
 messageheader = "From: EC2-Init <" + mailfrom + ">\n"
 messageheader += "To: " + mailto + "\n"
@@ -196,8 +224,16 @@ message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%
 
 # send boot email
 try:
+<<<<<<< HEAD
    smtpObj = smtplib.SMTP('localhost')
    smtpObj.sendmail(mailfrom, mailto, message)
 except smtplib.SMTPException:
    print("Error: unable to send boot alert email")
 
+=======
+    smtpObj = smtplib.SMTP('localhost')
+    smtpObj.sendmail(mailfrom, mailto, message)
+except smtplib.SMTPException:
+    print("Error: unable to send boot alert email")
+    
+>>>>>>> development
