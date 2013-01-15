@@ -26,12 +26,8 @@ Changelog:
 2012-06-20 - bcp - grabs domain name from user-data and sets DNS for instance  ID
 2012-09-15 - bcp - added additional grep for hostname and domainname in case both are returned
 2012-12-14 - bcp - updated for systemd, bash functions moved to single python script
-<<<<<<< HEAD
-
-=======
 2013-01-14 - bcp - grabs public keys from metadata and creates or updates authorized_keys for root
 2013-01-14 - bcp - pulls mailto, mailfrom from user metadata or config file /etc/conf.d/ec2-init
->>>>>>> development
 
 """
 
@@ -197,8 +193,6 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
 # update dns
 updatedns(hostname, PUBLICIP)
 
-<<<<<<< HEAD
-=======
 # Get mail to address from user metadata or conf file or default to root
 try:
     mailto = user_data['mailto']
@@ -215,7 +209,6 @@ except KeyError:
 except NameError:
     mailfrom = "root"
     
->>>>>>> development
 # compose boot email
 messageheader = "From: EC2-Init <" + mailfrom + ">\n"
 messageheader += "To: " + mailto + "\n"
@@ -224,16 +217,8 @@ message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%
 
 # send boot email
 try:
-<<<<<<< HEAD
-   smtpObj = smtplib.SMTP('localhost')
-   smtpObj.sendmail(mailfrom, mailto, message)
-except smtplib.SMTPException:
-   print("Error: unable to send boot alert email")
-
-=======
     smtpObj = smtplib.SMTP('localhost')
     smtpObj.sendmail(mailfrom, mailto, message)
 except smtplib.SMTPException:
     print("Error: unable to send boot alert email")
     
->>>>>>> development
