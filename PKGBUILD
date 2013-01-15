@@ -14,7 +14,7 @@ source=(ec2-init
         ec2-init.py
         ec2-init.service)
 md5sums=('738fdaeef16e5414b15e18761e75dc03'
-         'f71d29c33152027b329749ab4b1e90b9'
+         'a5f2d3cd49adfd57adcef5835171b75e'
          '35a912dd52355d6e3115f396cd694b1d')
 
 package() {

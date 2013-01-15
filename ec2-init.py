@@ -199,7 +199,7 @@ if sendemail:
     # Get mail to address from user metadata or conf file or default to root
     try:
         mailto = user_data['mailto']
-    except NameError:
+    except KeyError:
         mailto = confmailto
     except NameError:
         mailto = "root"
@@ -207,7 +207,7 @@ if sendemail:
     # Get mail from address from user metadata or conf file or default to root
     try:
         mailfrom = user_data['mailfrom']
-    except NameError:
+    except KeyError:
         mailfrom = confmailfrom
     except NameError:
         mailfrom = "root"
