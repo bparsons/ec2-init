@@ -7,14 +7,12 @@ Initialize Amazon EC2 Host
 
 Brian Parsons <brian@pmex.com>
 
-Originally Forked from ec2arch by Yejun Yang <yejunx AT gmail DOT com>
-https://github.com/yejun/ec2arch/raw/master/ec2
-https://aur.archlinux.org/packages.php?ID=40083
-
 
 Features:
 ---------
 Sets hostname based on instance user-data hostname
+Sends email with hostname, instance type, and IP address
+Will update DNS in Route53 if boto finds credentials or has IAM role and zone file is found
 
 
 Requires:
@@ -27,12 +25,13 @@ Changelog:
 2012-06-20 - bcp - added bootalert
 2012-06-20 - bcp - grabs domain name from user-data and sets DNS for instance  ID
 2012-09-15 - bcp - added additional grep for hostname and domainname in case both are returned
-2012-      - bcp - updated for systemd, bash functions moved to single python script
+2012-12-14 - bcp - updated for systemd, bash functions moved to single python script
 
 
 """
 
 import datetime
+import os
 import re
 import socket
 import smtplib
@@ -46,6 +45,11 @@ from boto.route53.exception import DNSServerError
 from boto.utils import get_instance_metadata, get_instance_userdata
 from socket import gethostname
 
+########
+##
+## updatedns - Updates DNS for given hostname to newip 
+##
+#
 
 def updatedns(hostname, newip):
     try:
@@ -147,32 +151,53 @@ except NameError:
     hostname = gethostname()
 
 # set hostname in /etc/hostname
-hostfile = open('/etc/hostname', 'w')
-hostfile.write(hostname)
-hostfile.write('\n')
-hostfile.close()
+try:
+    with open('/etc/hostname', 'w') as hostfile:
+        hostfile.write(hostname)
+        hostfile.write('\n')
+        hostfile.close()
+except IOError as e:
+        print('Could not open /etc/hostname for writing' + e)
 
 # set hostname with the system
 subcmd = "hostname " + hostname
 subprocess.call(subcmd,shell=True)
 
-# TODO
-# set root key if it doesn't exist
-# if file not exist  /root/.ssh/authorized_keys
-# loop through public-keys, save to file
-#
+# make sure /root/.ssh exists
+if not os.path.exists('/root/.ssh'):
+    os.makedirs('/root/.ssh')
+    os.chmod('/root/.ssh',0700)
 
+# save public key to authorized_keys file
+if type(PUBLICKEYS.items()) in [list, tuple, set]:
+    try:
+        currentkeys = open('/root/.ssh/authorized_keys').read()
+    except IOError as e:
+        currentkeys = ""
+    try:
+        with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
+            for key in PUBLICKEYS.items():
+                if  not key[1][0]  in currentkeys:
+                    authkeyfile.write(key[1][0])
+                    authkeyfile.write('\n')
+            authkeyfile.close()
+            os.chmod('/root/.ssh/authorized_keys',0600)
+    except IOError as e:
+            print 'Could not open authorized_keys file for writing!' + e
+
+# update dns
 updatedns(hostname, PUBLICIP)
 
+# compose boot email
 messageheader = "From: EC2-Init <" + mailfrom + ">\n"
 messageheader += "To: " + mailto + "\n"
 messageheader += "Subject: " + hostname + "\n\n"
 message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%S %Z %Y") + ". A " + INSTANCETYPE + " in " + AVAILABILITYZONE + " with IP: " + PUBLICIP + ".\n\n"
 
+# send boot email
 try:
    smtpObj = smtplib.SMTP('localhost')
    smtpObj.sendmail(mailfrom, mailto, message)
-   print "Successfully sent boot alert email"
-except SMTPException:
-   print "Error: unable to send boot alert email"
+except smtplib.SMTPException:
+   print("Error: unable to send boot alert email")
 
