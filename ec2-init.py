@@ -194,7 +194,7 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
 # update dns
 updatedns(hostname, PUBLICIP)
 
-if sendemail:
+if sendemail == True:
 
     # Get mail to address from user metadata or conf file or default to root
     try:
