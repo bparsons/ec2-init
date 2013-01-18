@@ -267,6 +267,7 @@ if sendemail == 1:
   except NameError:
       mailfrom = "root"
 
+  print("Sending mail" + mailfrom + "to " + mailto + ".")
   # compose boot email
   messageheader = "From: EC2-Init <" + mailfrom + ">\n"
   messageheader += "To: " + mailto + "\n"
@@ -280,3 +281,6 @@ if sendemail == 1:
   except smtplib.SMTPException:
       print("Error: unable to send boot alert email")
 
+else:
+
+  print("Not sending mail")
