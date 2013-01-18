@@ -4,7 +4,7 @@
 #
 
 pkgname=ec2-init
-pkgver=3.4
+pkgver=3.5
 pkgrel=1
 arch=('any')
 backup=('etc/conf.d/ec2-init')
@@ -14,7 +14,7 @@ source=(ec2-init
         ec2-init.py
         ec2-init.service)
 md5sums=('7aa841b8f72d34f8beff6aeee013c703'
-         'af2cbab0c297e55d9075f7544d93c13d'
+         'd174e26fe5ba9b1f26b6756363607254'
          '35a912dd52355d6e3115f396cd694b1d')
 
 package() {
