@@ -7,11 +7,13 @@ It creates or updates the hostname and root ssh access keys upon boot.
 
 ## Requirements
 
-#### boto - Arch Package: python2-boto 
+* boto (Arch Package python2-boto)
+* python2 (Arch Package python2)
+* postfix (Arch Package postfix)
 
-#### python2 - Arch Package python2
+Postfix also needs to be enabled with systemd
 
-#### postfix - Arch Package postfix
+    systemctl enable postfix
 
 ## Features
 
