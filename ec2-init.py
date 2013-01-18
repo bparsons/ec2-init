@@ -249,6 +249,7 @@ except KeyError:
 except NameError:
     sendemail = 1
 
+print "Sendemail" + sendemail
 if sendemail == 1:
 
   # Get mail to address from user metadata or conf file or default to root
