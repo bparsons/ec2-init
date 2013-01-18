@@ -249,7 +249,7 @@ except KeyError:
 except NameError:
     sendemail = 1
 
-if atoi(sendemail) == 1:
+if int(sendemail) == 1:
 
   # Get mail to address from user metadata or conf file or default to root
   try:
