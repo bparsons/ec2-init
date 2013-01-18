@@ -32,6 +32,7 @@ field of the instance as key value pairs delimited by pipes (|):
 hostname - the hostname to set for the instance
 mailto - the address to email with a message listing the instance information and ip address
 mailfrom - the from address of the message
+sendemail - a 1 or 0 flag on whether to send a message or not (1 sends - default)
 
 Additionally if IAM role is granted permission to Route53 or
 if boto credentials are found in /root/.boto, the script will
@@ -42,11 +43,16 @@ Finally, the script sends an email message to a specified address listing the
 hostname, instance type, and external IP address of the instance. This requires
 a functioning MTA on the image.
 
+The script will attempt to get mailto, mailfrom and sendemail from a configuration file: /etc/conf.d/ec2-init
+
+If no configuration file is found and mailto, mailfrom are not specified in user-metadata for the instance,
+it will send the message to root from root.
+
 
 The MIT License (MIT)
 ---------------------
 
-Copyright (c) 2013 Brian Parsons
+Copyright (c) 2012-2013 Brian Parsons
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -75,6 +81,7 @@ Changelog:
 2012-12-14 - bcp - updated for systemd, bash functions moved to single python script
 2013-01-14 - bcp - grabs public keys from metadata and creates or updates authorized_keys for root
 2013-01-14 - bcp - pulls mailto, mailfrom from user metadata or config file /etc/conf.d/ec2-init
+2013-01-17 - bcp - pulls sendemail from config file or user-metadata
 
 """
 

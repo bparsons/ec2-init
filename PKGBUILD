@@ -13,7 +13,7 @@ depends=('postfix' 'python2-boto' 'python2')
 source=(ec2-init
         ec2-init.py
         ec2-init.service)
-md5sums=('3f745258fc3ef1398e7a721dd984df7c'
+md5sums=('7aa841b8f72d34f8beff6aeee013c703'
          'af2cbab0c297e55d9075f7544d93c13d'
          '35a912dd52355d6e3115f396cd694b1d')
 
