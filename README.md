@@ -1,5 +1,5 @@
 
-# Initialize Amazon EC2 Host
+# Initialize Amazon EC2 Arch Linux Instance
 
 This script is meant to run on boot of an Arch Linux Amazon EC2 server image.
 
