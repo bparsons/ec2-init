@@ -20,6 +20,53 @@ Requires:
 boto - https://github.com/boto/boto
 
 
+Usage:
+-------
+This script is meant to run on boot of an Arch Linux Amazon EC2 server.
+
+It creates or updates the hostname and root ssh access keys upon boot.
+
+Additionally this script will find the following metadata if listed in the user-metadata
+field of the instance as key value pairs delimited by pipes (|):
+
+hostname - the hostname to set for the instance
+mailto - the address to email with a message listing the instance information and ip address
+mailfrom - the from address of the message
+
+Additionally if IAM role is granted permission to Route53 or
+if boto credentials are found in /root/.boto, the script will
+create or update a DNS entry for the hostname if it finds a matching zone
+in Route53
+
+Finally, the script sends an email message to a specified address listing the
+hostname, instance type, and external IP address of the instance. This requires
+a functioning MTA on the image.
+
+
+The MIT License (MIT)
+---------------------
+
+Copyright (c) 2013 Brian Parsons
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+
 Changelog:
 ---------------
 2012-06-20 - bcp - added bootalert
@@ -49,7 +96,7 @@ from socket import gethostname
 
 ########
 ##
-## updatedns - Updates DNS for given hostname to newip 
+## updatedns - Updates DNS for given hostname to newip
 ##
 #
 
@@ -137,9 +184,10 @@ config.read("/etc/conf.d/ec2-init")
 try:
     confmailto = config.get("ec2-init", "mailto")
     confmailfrom = config.get("ec2-init", "mailfrom")
-except ConfigParser.NoSectionError: 
+    confsendemail = config.get("ec2-init", "sendemail")
+except ConfigParser.NoSectionError:
     print("Config file /etc/conf.d/ec2-init not found")
-    
+
 # Collect Meta Data
 inst_data = get_instance_metadata()
 INSTANCETYPE=inst_data["instance-type"]
@@ -152,7 +200,7 @@ user_data = get_instance_userdata(sep='|')
 
 try:
     hostname = user_data['hostname']
-except NameError:
+except KeyError:
     hostname = gethostname()
 
 # set hostname in /etc/hostname
@@ -193,32 +241,42 @@ if type(PUBLICKEYS.items()) in [list, tuple, set]:
 # update dns
 updatedns(hostname, PUBLICIP)
 
-# Get mail to address from user metadata or conf file or default to root
+# Check if we are to send email
 try:
-    mailto = user_data['mailto']
+    sendemail = user_data['sendemail']
 except KeyError:
-    mailto = confmailto
+    sendemail = confsendemail
 except NameError:
-    mailto = "root"
-    
-# Get mail from address from user metadata or conf file or default to root
-try:
-    mailfrom = user_data['mailfrom']
-except KeyError:
-    mailfrom = confmailfrom
-except NameError:
-    mailfrom = "root"
-    
-# compose boot email
-messageheader = "From: EC2-Init <" + mailfrom + ">\n"
-messageheader += "To: " + mailto + "\n"
-messageheader += "Subject: " + hostname + "\n\n"
-message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%S %Z %Y") + ". A " + INSTANCETYPE + " in " + AVAILABILITYZONE + " with IP: " + PUBLICIP + ".\n\n"
+    sendemail = 1
 
-# send boot email
-try:
-    smtpObj = smtplib.SMTP('localhost')
-    smtpObj.sendmail(mailfrom, mailto, message)
-except smtplib.SMTPException:
-    print("Error: unable to send boot alert email")
-    
+if sendemail == 1:
+
+  # Get mail to address from user metadata or conf file or default to root
+  try:
+      mailto = user_data['mailto']
+  except KeyError:
+      mailto = confmailto
+  except NameError:
+      mailto = "root"
+
+  # Get mail from address from user metadata or conf file or default to root
+  try:
+      mailfrom = user_data['mailfrom']
+  except KeyError:
+      mailfrom = confmailfrom
+  except NameError:
+      mailfrom = "root"
+
+  # compose boot email
+  messageheader = "From: EC2-Init <" + mailfrom + ">\n"
+  messageheader += "To: " + mailto + "\n"
+  messageheader += "Subject: " + hostname + "\n\n"
+  message = messageheader + hostname + " booted " + now.strftime("%a %b %d %H:%M:%S %Z %Y") + ". A " + INSTANCETYPE + " in " + AVAILABILITYZONE + " with IP: " + PUBLICIP + ".\n\n"
+
+  # send boot email
+  try:
+      smtpObj = smtplib.SMTP('localhost')
+      smtpObj.sendmail(mailfrom, mailto, message)
+  except smtplib.SMTPException:
+      print("Error: unable to send boot alert email")
+
