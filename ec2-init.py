@@ -267,7 +267,7 @@ if int(sendemail) == 1:
   except NameError:
       mailfrom = "root"
 
-  print("Sending mail" + mailfrom + "to " + mailto + ".")
+  print("Sending mail from " + mailfrom + " to " + mailto + ".")
   # compose boot email
   messageheader = "From: EC2-Init <" + mailfrom + ">\n"
   messageheader += "To: " + mailto + "\n"
