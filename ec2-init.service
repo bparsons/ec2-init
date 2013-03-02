@@ -1,9 +1,9 @@
-[Unit] 
+[Unit]
 Description=EC2 Instance Initialization Script
 After=postfix.service
 
-[Service] 
+[Service]
 ExecStart=/usr/bin/ec2-init.py
 
-[Install] 
-WantedBy=multi-user.target 
+[Install]
+WantedBy=multi-user.target

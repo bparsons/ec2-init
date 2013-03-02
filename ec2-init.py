@@ -195,7 +195,7 @@ try:
 except ConfigParser.NoSectionError:
     print("Config file /etc/conf.d/ec2-init not found")
 
-# Collect Meta Data
+# Collect Instance Meta Data
 inst_data = get_instance_metadata()
 INSTANCETYPE=inst_data["instance-type"]
 INSTANCEID=inst_data["instance-id"]
@@ -203,7 +203,34 @@ PUBLICIP=inst_data["public-ipv4"]
 PUBLICKEYS=inst_data["public-keys"]
 AVAILABILITYZONE=inst_data["placement"]["availability-zone"]
 now = datetime.datetime.now()
-user_data = get_instance_userdata(sep='|')
+
+# make sure /root/.ssh exists
+if not os.path.exists('/root/.ssh'):
+	os.makedirs('/root/.ssh')
+	os.chmod('/root/.ssh',0700)
+
+# save public key to authorized_keys file
+if type(PUBLICKEYS.items()) in [list, tuple, set]:
+	try:
+		currentkeys = open('/root/.ssh/authorized_keys').read()
+		except IOError as e:
+			currentkeys = ""
+			try:
+				with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
+					for key in PUBLICKEYS.items():
+						if  not key[1][0]  in currentkeys:
+							authkeyfile.write(key[1][0])
+							authkeyfile.write('\n')
+							authkeyfile.close()
+							os.chmod('/root/.ssh/authorized_keys',0600)
+							except IOError as e:
+								print 'Could not open authorized_keys file for writing!' + e
+
+# Collect User Meta Data
+try:
+	user_data = get_instance_userdata(sep='|')
+except:
+	print('No user data found for instance')
 
 try:
     hostname = user_data['hostname']
@@ -222,28 +249,6 @@ except IOError as e:
 # set hostname with the system
 subcmd = "hostname " + hostname
 subprocess.call(subcmd,shell=True)
-
-# make sure /root/.ssh exists
-if not os.path.exists('/root/.ssh'):
-    os.makedirs('/root/.ssh')
-    os.chmod('/root/.ssh',0700)
-
-# save public key to authorized_keys file
-if type(PUBLICKEYS.items()) in [list, tuple, set]:
-    try:
-        currentkeys = open('/root/.ssh/authorized_keys').read()
-    except IOError as e:
-        currentkeys = ""
-    try:
-        with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
-            for key in PUBLICKEYS.items():
-                if  not key[1][0]  in currentkeys:
-                    authkeyfile.write(key[1][0])
-                    authkeyfile.write('\n')
-            authkeyfile.close()
-            os.chmod('/root/.ssh/authorized_keys',0600)
-    except IOError as e:
-            print 'Could not open authorized_keys file for writing!' + e
 
 # update dns
 updatedns(hostname, PUBLICIP)
