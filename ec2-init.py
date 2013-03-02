@@ -101,12 +101,9 @@ from boto.route53.exception import DNSServerError
 from boto.utils import get_instance_metadata, get_instance_userdata
 from socket import gethostname
 
-########
-##
-## updatedns - Updates DNS for given hostname to newip
-##
 #
-
+# updatedns - Updates DNS for given hostname to newip
+#
 def updatedns(hostname, newip):
     try:
        hostname
@@ -213,18 +210,18 @@ if not os.path.exists('/root/.ssh'):
 if type(PUBLICKEYS.items()) in [list, tuple, set]:
 	try:
 		currentkeys = open('/root/.ssh/authorized_keys').read()
-		except IOError as e:
-			currentkeys = ""
-			try:
-				with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
-					for key in PUBLICKEYS.items():
-						if  not key[1][0]  in currentkeys:
-							authkeyfile.write(key[1][0])
-							authkeyfile.write('\n')
-							authkeyfile.close()
-							os.chmod('/root/.ssh/authorized_keys',0600)
-							except IOError as e:
-								print 'Could not open authorized_keys file for writing!' + e
+	except:
+		currentkeys = ""
+		try:
+			with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
+				for key in PUBLICKEYS.items():
+					if  not key[1][0]  in currentkeys:
+						authkeyfile.write(key[1][0])
+						authkeyfile.write('\n')
+						authkeyfile.close()
+						os.chmod('/root/.ssh/authorized_keys',0600)
+		except:
+			print ('Could not open authorized_keys file for writing!')
 
 # Collect User Meta Data
 try:
@@ -234,7 +231,7 @@ except:
 
 try:
     hostname = user_data['hostname']
-except KeyError:
+except:
     hostname = gethostname()
 
 # set hostname in /etc/hostname
@@ -243,8 +240,8 @@ try:
         hostfile.write(hostname)
         hostfile.write('\n')
         hostfile.close()
-except IOError as e:
-        print('Could not open /etc/hostname for writing' + e)
+except:
+	print('Could not open /etc/hostname for writing')
 
 # set hostname with the system
 subcmd = "hostname " + hostname
@@ -291,8 +288,8 @@ if int(sendemail) == 1:
       smtpObj = smtplib.SMTP('localhost')
       smtpObj.sendmail(mailfrom, mailto, message)
   except smtplib.SMTPException:
-      print("Error: unable to send boot alert email")
+      print('Error: unable to send boot alert email')
 
 else:
 
-  print("Not sending mail")
+  print('Not sending mail')
