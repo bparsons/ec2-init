@@ -248,12 +248,15 @@ subcmd = "hostname " + hostname
 subprocess.call(subcmd,shell=True)
 
 # update dns
-updatedns(hostname, PUBLICIP)
+try:
+    updatedns(hostname, PUBLICIP)
+except:
+    print('DNS Update failed. Check credentials or IAM roles.')
 
 # Check if we are to send email
 try:
     sendemail = user_data['sendemail']
-except KeyError:
+except (TypeError, KeyError):
     sendemail = confsendemail
 except NameError:
     sendemail = 1
@@ -263,7 +266,7 @@ if int(sendemail) == 1:
   # Get mail to address from user metadata or conf file or default to root
   try:
       mailto = user_data['mailto']
-  except KeyError:
+  except (TypeError, KeyError):
       mailto = confmailto
   except NameError:
       mailto = "root"
@@ -271,7 +274,7 @@ if int(sendemail) == 1:
   # Get mail from address from user metadata or conf file or default to root
   try:
       mailfrom = user_data['mailfrom']
-  except KeyError:
+  except (TypeError, KeyError):
       mailfrom = confmailfrom
   except NameError:
       mailfrom = "root"
