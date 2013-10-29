@@ -1,6 +1,6 @@
 [Unit]
 Description=EC2 Instance Initialization Script
-After=postfix.service
+After=network.target 
 
 [Service]
 ExecStart=/usr/bin/ec2-init.py
