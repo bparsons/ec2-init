@@ -11,7 +11,7 @@ It creates or updates the hostname and root ssh access keys upon boot.
 * python2 (Arch Package python2)
 * postfix (Arch Package postfix)
 
-Postfix also needs to be enabled with systemd
+In order to send the email, postfix also needs to be enabled with systemd:
 
     systemctl enable postfix
 
