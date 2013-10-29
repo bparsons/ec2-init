@@ -109,7 +109,7 @@ def updatedns(hostname, newip):
        hostname
     except NameError:
        print 'Hostname not specified and not able to detect.'
-       return(1)
+       return False
 
     # Add trailing dot to hostname if it doesn't have one
     if hostname[-1:] != ".":
@@ -127,7 +127,7 @@ def updatedns(hostname, newip):
     except DNSServerError,  e:
         print 'Connection error to AWS. Check your credentials.'
         print 'Error %s - %s' % (e.code,  str(e))
-        return(1)
+        return False
 
     for zone in route53zones['ListHostedZonesResponse']['HostedZones']:
         if zone['Name'][0:-1] in hostname:
@@ -138,7 +138,7 @@ def updatedns(hostname, newip):
         zoneid
     except NameError:
         print 'Unable to find Route53 Zone for %s' % hostname
-        return(1)
+        return False
 
     # Find the old record if it exists
     try:
@@ -146,7 +146,7 @@ def updatedns(hostname, newip):
     except DNSServerError,  e:
         print 'Connection error to AWS.'
         print 'Error %s - %s' % (e.code,  str(e))
-        return(1)
+        return False
 
     for rset in sets:
         if rset.name == hostname and rset.type == 'A':
