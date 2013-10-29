@@ -9,10 +9,10 @@ It creates or updates the hostname and root ssh access keys upon boot.
 
 * boto (Arch Package python2-boto)
 * python2 (Arch Package python2)
-* postfix (Arch Package postfix)
 
-In order to send the email, postfix also needs to be enabled with systemd:
+In order to send the email, an MTA needs to be installed and enabled with systemd. For example, to use postfix:
 
+    pacman -Sy postfix
     systemctl enable postfix
 
 ## Features

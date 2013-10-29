@@ -9,7 +9,7 @@ pkgrel=1
 arch=('any')
 backup=('etc/conf.d/ec2-init')
 license=('MIT')
-depends=('postfix' 'python2-boto' 'python2')
+depends=('python2-boto' 'python2')
 source=(ec2-init
         ec2-init.py
         ec2-init.service)
