@@ -1,4 +1,3 @@
-
 # Initialize Amazon EC2 Arch Linux Instance
 
 This script is meant to run on boot of an Arch Linux Amazon EC2 server image.
@@ -48,3 +47,5 @@ it will send the message to root from root.
 ## License
 
 This script is distributed under the MIT License (see LICENSE)
+
+[![Analytics](https://ga-beacon.appspot.com/UA-24846718-5/ec2-init/README.md)](https://github.com/igrigorik/ga-beacon)
