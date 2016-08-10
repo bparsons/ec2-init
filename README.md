@@ -1,6 +1,6 @@
-# Initialize Amazon EC2 Arch Linux Instance
+# Initialize Amazon EC2 Linux Instance
 
-This script is meant to run on boot of an Arch Linux Amazon EC2 server image.
+This script is meant to run on boot of an Amazon EC2 linux image.
 
 It creates or updates the hostname and root ssh access keys upon boot.
 

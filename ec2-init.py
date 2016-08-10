@@ -22,11 +22,9 @@ boto - https://github.com/boto/boto
 
 Usage:
 -------
-This script is meant to run on boot of an Arch Linux Amazon EC2 server.
+This script is meant to run on boot of an Amazon EC2 server.
 
-It creates or updates the hostname and root ssh access keys upon boot.
-
-Additionally this script will find the following metadata if listed in the user-metadata
+This script will find the following metadata if listed in the user-metadata
 field of the instance as key value pairs delimited by pipes (|):
 
 hostname - the hostname to set for the instance
@@ -34,18 +32,17 @@ mailto - the address to email with a message listing the instance information an
 mailfrom - the from address of the message
 sendemail - a 1 or 0 flag on whether to send a message or not (1 sends - default)
 
-Additionally if IAM role is granted permission to Route53 or
-if boto credentials are found in /root/.boto, the script will
-create or update a DNS entry for the hostname if it finds a matching zone
-in Route53
+The email address and flag can also be set in a configuration file in /etc/conf.d or /etc/defaults
 
-Finally, the script sends an email message to a specified address listing the
-hostname, instance type, and external IP address of the instance. This requires
-a functioning MTA on the image.
+This script performs the following operations:
 
-The script will attempt to get mailto, mailfrom and sendemail from a configuration file: /etc/conf.d/ec2-init
+ - Creates or updates the hostname
+ - Adds root ssh access keys
+ - Updates the Route53 DNS entry for the hostname *
+ - Sends an email message to the specified address listing the hostname, instance type and external IP address of the instance **
 
-If no configuration file is found and mailto, mailfrom are not specified in user-metadata for the instance,
+* Updating the DNS entry in Route53 requires the instance be granted permission to Route 53 via IAM or boto credentials in /root/.boto 
+** Requires functioning MTA on the instance image. If no configuration file is found and mailto, mailfrom are not specified in user-metadata for the instance,
 it will send the message to root from root.
 
 
@@ -183,14 +180,23 @@ def updatedns(hostname, newip):
     change2.commit()
 
 # Parse Config File
-config = ConfigParser.ConfigParser()
-config.read("/etc/conf.d/ec2-init")
-try:
-    confmailto = config.get("ec2-init", "mailto")
-    confmailfrom = config.get("ec2-init", "mailfrom")
-    confsendemail = config.get("ec2-init", "sendemail")
-except ConfigParser.NoSectionError:
-    print("Config file /etc/conf.d/ec2-init not found")
+parseconfigfile = 0
+confsendemail = 0
+if os.path.isfile("/etc/conf.d/ec2-init"):
+	parseconfigfile = 1
+	configfile = "/etc/conf.d/ec2-init"
+if os.path.isfile("/etc/default/ec2-init"):
+	parseconfigfile = 1
+	configfile = "/etc/default/ec2-init"
+if parseconfigfile:
+	config = ConfigParser.ConfigParser()
+	config.read(configfile)
+	try:
+	    confmailto = config.get("ec2-init", "mailto")
+	    confmailfrom = config.get("ec2-init", "mailfrom")
+	    confsendemail = config.get("ec2-init", "sendemail")
+	except ConfigParser.NoSectionError:
+	    print("Error: Unable to parse config file")
 
 # Collect Instance Meta Data
 inst_data = get_instance_metadata()
