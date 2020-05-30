@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/bin/env python
 
 """
 ec2-init.py
@@ -79,10 +79,11 @@ Changelog:
 2013-01-14 - bcp - grabs public keys from metadata and creates or updates authorized_keys for root
 2013-01-14 - bcp - pulls mailto, mailfrom from user metadata or config file /etc/conf.d/ec2-init
 2013-01-17 - bcp - pulls sendemail from config file or user-metadata
+2020-05-29 - bcp - python 3 / boto
 
 """
 
-import ConfigParser
+import configparser
 import datetime
 import os
 import re
@@ -90,7 +91,7 @@ import socket
 import smtplib
 import sys
 import subprocess
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from boto.route53.connection import Route53Connection
 from boto.route53.record import ResourceRecordSets
@@ -105,15 +106,15 @@ def updatedns(hostname, newip):
     try:
        hostname
     except NameError:
-       print 'Hostname not specified and not able to detect.'
+       print ('Hostname not specified and not able to detect.')
        return False
 
     # Add trailing dot to hostname if it doesn't have one
     if hostname[-1:] != ".":
         hostname += "."
 
-    print 'Hostname: %s' % hostname
-    print 'Current IP: %s' % newip
+    print(('Hostname: %s' % hostname))
+    print(('Current IP: %s' % newip))
 
     # Initialize the connection to AWS Route53
     route53 = Route53Connection()
@@ -121,28 +122,28 @@ def updatedns(hostname, newip):
     # Get the zoneid
     try:
         route53zones = route53.get_all_hosted_zones()
-    except DNSServerError,  e:
-        print 'Connection error to AWS. Check your credentials.'
-        print 'Error %s - %s' % (e.code,  str(e))
+    except (DNSServerError, e):
+        print ('Connection error to AWS. Check your credentials.')
+        print(('Error %s - %s' % (e.code,  str(e))))
         return False
 
     for zone in route53zones['ListHostedZonesResponse']['HostedZones']:
         if zone['Name'][0:-1] in hostname:
             zoneid = zone['Id'].replace('/hostedzone/', '')
-            print 'Found Route53 Zone %s for hostname %s' % (zoneid,  hostname)
+            print(('Found Route53 Zone %s for hostname %s' % (zoneid,  hostname)))
 
     try:
         zoneid
     except NameError:
-        print 'Unable to find Route53 Zone for %s' % hostname
+        print(('Unable to find Route53 Zone for %s' % hostname))
         return False
 
     # Find the old record if it exists
     try:
         sets = route53.get_all_rrsets(zoneid)
-    except DNSServerError,  e:
-        print 'Connection error to AWS.'
-        print 'Error %s - %s' % (e.code,  str(e))
+    except (DNSServerError, e):
+        print('Connection error to AWS.')
+        print('Error %s - %s' % (e.code,  str(e)))
         return False
 
     for rset in sets:
@@ -151,29 +152,29 @@ def updatedns(hostname, newip):
             if type(curiprecord) in [list, tuple, set]:
                 for record in curiprecord:
                     curip = record
-            print 'Current DNS IP: %s' % curip
+            print('Current DNS IP: %s' % curip)
             curttl = rset.ttl
-            print 'Current DNS TTL: %s' % curttl
+            print('Current DNS TTL: %s' % curttl)
 
             if curip != newip:
                 # Remove the old record
-                print 'Removing old record...'
+                print('Removing old record...')
                 change1 = ResourceRecordSets(route53, zoneid)
                 removeold = change1.add_change("DELETE", hostname, "A", curttl)
                 removeold.add_value(curip)
                 change1.commit()
             else:
-                print 'IPs match,  not making any changes in DNS.'
+                print('IPs match,  not making any changes in DNS.')
                 return
 
     try:
         curip
     except NameError:
-        print 'Hostname %s not found in current zone record' % hostname
+        print('Hostname %s not found in current zone record' % hostname)
 
 
     # Add the new record
-    print 'Adding %s to DNS as %s...' % ( hostname,  newip)
+    print('Adding %s to DNS as %s...' % ( hostname,  newip))
     change2 = ResourceRecordSets(route53, zoneid)
     change = change2.add_change("CREATE", hostname, "A", 60)
     change.add_value(newip)
@@ -189,13 +190,13 @@ if os.path.isfile("/etc/default/ec2-init"):
 	parseconfigfile = 1
 	configfile = "/etc/default/ec2-init"
 if parseconfigfile:
-	config = ConfigParser.ConfigParser()
+	config = configparser.ConfigParser()
 	config.read(configfile)
 	try:
 	    confmailto = config.get("ec2-init", "mailto")
 	    confmailfrom = config.get("ec2-init", "mailfrom")
 	    confsendemail = config.get("ec2-init", "sendemail")
-	except ConfigParser.NoSectionError:
+	except configparser.NoSectionError:
 	    print("Error: Unable to parse config file")
 
 # Collect Instance Meta Data
@@ -210,22 +211,22 @@ now = datetime.datetime.now()
 # make sure /root/.ssh exists
 if not os.path.exists('/root/.ssh'):
 	os.makedirs('/root/.ssh')
-	os.chmod('/root/.ssh',0700)
+	os.chmod('/root/.ssh',0o700)
 
 # save public key to authorized_keys file
-if type(PUBLICKEYS.items()) in [list, tuple, set]:
+if type(list(PUBLICKEYS.items())) in [list, tuple, set]:
 	try:
 		currentkeys = open('/root/.ssh/authorized_keys').read()
 	except:
 		currentkeys = ""
 		try:
 			with open('/root/.ssh/authorized_keys', 'a') as authkeyfile:
-				for key in PUBLICKEYS.items():
+				for key in list(PUBLICKEYS.items()):
 					if  not key[1][0]  in currentkeys:
 						authkeyfile.write(key[1][0])
 						authkeyfile.write('\n')
 						authkeyfile.close()
-						os.chmod('/root/.ssh/authorized_keys',0600)
+						os.chmod('/root/.ssh/authorized_keys',0o600)
 		except:
 			print ('Could not open authorized_keys file for writing!')
 
@@ -285,7 +286,7 @@ if int(sendemail) == 1:
   except NameError:
       mailfrom = "root"
 
-  print("Sending mail from " + mailfrom + " to " + mailto + ".")
+  print(("Sending mail from " + mailfrom + " to " + mailto + "."))
   # compose boot email
   messageheader = "From: EC2-Init <" + mailfrom + ">\n"
   messageheader += "To: " + mailto + "\n"
